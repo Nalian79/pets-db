@@ -16,10 +16,19 @@ def readcsv(filename):
     with open(filename, "r+") as f:
         logging.debug("Opened file {!r} successfully.".format(filename))
         reader = csv.DictReader(f, delimiter=',')
+        # Strip whitespace from key/value pairs
+        reader = (dict(
+                (k.strip(), v.strip())
+                for k, v in row.items() if v) for row in reader)
         for row in reader:
-            pet_info.append(row)
+            for key in row:
+                if row[key]:
+                    pet_info.append(row)
+                else:
+                    row[key] = None
             logging.debug("Inserted {!r} into list".format(row))
     return pet_info
+
 
 def add_pets(pet_list, database="pets"):
     """Add pets to our database from the csv file we parsed into a list """
@@ -32,28 +41,33 @@ def add_pets(pet_list, database="pets"):
 
     cur=conn.cursor()
 
-    for item in pet_list:
-        logging.debug("Trying to insert {!r}".format(item))
-        query = "INSERT INTO pet (name) VALUES ({!r})".format(
-            item['Name'])
-        cur.executemany(query, item)
-
+    for pet in pet_list:
+        logging.debug("Trying to insert {!r}".format(pet))
+        query = "INSERT INTO pet (name, adopted, age) \
+                VALUES (%(Name)s, %(adopted)s, %(age)s)"
+        cur.execute(query, pet)
     conn.commit()
     cur.close()
     conn.close()
 
+def dict_work(pet_list):
+
+    for pet in pet_list:
+        print "Record Start"
+        for key in pet:
+            print key, pet[key]
 
 def main():
     """ Main function """
     logging.info("Starting script..")
     # Lets make sure we can read in the CSV file and get a valid dict.
     file_name="pets_to_add.csv"
-    # Create list of pet info in dict format
+    # Create list of pets, put their info into a dictionary
     pet_list = readcsv(file_name)
 
     # Add pets to the db
     add_pets(pet_list)
-
+#    dict_work(pet_list)
 
 
 if __name__ == "__main__":
