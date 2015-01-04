@@ -19,14 +19,14 @@ def readcsv(filename):
         # Strip whitespace from key/value pairs
         reader = (dict(
                 (k.strip(), v.strip())
-                for k, v in row.items() if v) for row in reader)
+                for k, v in row.items()) for row in reader)
         for row in reader:
-            for key in row:
-                if row[key]:
-                    pet_info.append(row)
-                else:
-                    row[key] = None
+            pet_info.append(row)
             logging.debug("Inserted {!r} into list".format(row))
+        for pet in pet_info:
+            for key in pet:
+                if pet[key] == '':
+                    pet[key] = None
     return pet_info
 
 
@@ -40,7 +40,7 @@ def add_pets(pet_list, database="pets"):
         print "Couldn't connect to the DB!"
 
     cur=conn.cursor()
-
+    # Insert initial data into the pet table
     for pet in pet_list:
         logging.debug("Trying to insert {!r}".format(pet))
         query = "INSERT INTO pet (name, adopted, age) \
