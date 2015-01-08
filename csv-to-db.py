@@ -42,20 +42,34 @@ def add_pets(pet_list, database="pets"):
     cur=conn.cursor()
     # Insert initial data into the pet table
     for pet in pet_list:
-        logging.debug("Trying to insert {!r}".format(pet))
-        query = "INSERT INTO pet (name, adopted, age) \
-                VALUES (%(Name)s, %(adopted)s, %(age)s)"
+        logging.debug("Trying to insert {!r}, {!r}, {!r}".format(
+                pet['Name'], pet['adopted'], pet['age']))
+        query = "INSERT INTO pet (name, adopted, age) VALUES \
+                 (%(Name)s, %(adopted)s, %(age)s)"
         cur.execute(query, pet)
+
+    # Insert shelter_id's into the pet table based on shelter name in csv
+    for pet in pet_list:
+        logging.debug("Trying to insert {!r}".format(pet['shelter name']))
+        shelter_name = pet['shelter name']
+        if shelter_name != None:
+            lookup_query = "update pet set shelter_id = shelter.id from shelter \
+                            where shelter.name='%s' and \
+                            pet.name='%s'" % (pet['shelter name'], pet['Name'])
+            print lookup_query
+            cur.execute(lookup_query, pet)
+
+
     conn.commit()
     cur.close()
     conn.close()
 
-def dict_work(pet_list):
+def dict_print(pet_list):
 
     for pet in pet_list:
         print "Record Start"
         for key in pet:
-            print key, pet[key]
+            print key, ':', pet[key]
 
 def main():
     """ Main function """
@@ -67,7 +81,7 @@ def main():
 
     # Add pets to the db
     add_pets(pet_list)
-#    dict_work(pet_list)
+#    dict_print(pet_list)
 
 
 if __name__ == "__main__":
